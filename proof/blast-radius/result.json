@@ -1,0 +1,54 @@
+{
+  "package": {
+    "name": "@acme/ui-kit",
+    "version": "2.4.0"
+  },
+  "interval": {
+    "from": "2026-07-01T09:00:00Z",
+    "to": "2026-07-01T09:06:00Z"
+  },
+  "candidates": 4,
+  "exposed": [
+    {
+      "service": "acme-web",
+      "provider": "cloudflare",
+      "environmentLabel": "production",
+      "state": "EXPOSED",
+      "reasonCode": "EXPOSED_SAME_SHA_PATH",
+      "pathComplete": true
+    },
+    {
+      "service": "acme-api",
+      "provider": "cloudflare",
+      "environmentLabel": "production",
+      "state": "EXPOSED",
+      "reasonCode": "EXPOSED_SAME_SHA_PATH",
+      "pathComplete": true
+    }
+  ],
+  "notExposed": [
+    {
+      "service": "acme-marketing",
+      "provider": "cloudflare",
+      "environmentLabel": "staging",
+      "state": "NOT_EXPOSED",
+      "reasonCode": "NOT_EXPOSED_NO_PRODUCTION_BUILD",
+      "pathComplete": false
+    }
+  ],
+  "unproven": [
+    {
+      "service": "acme-legacy",
+      "provider": "cloudflare",
+      "environmentLabel": "production",
+      "state": "UNPROVEN",
+      "reasonCode": "UNPROVEN_SHA_MISMATCH",
+      "pathComplete": false
+    }
+  ],
+  "snapshot": {
+    "bookmark": "sgk:1:64656661756c74:64656661756c74:63656c6c2d30:177",
+    "readEpoch": 177
+  },
+  "generatedAt": "2026-08-18T22:36:20.771Z"
+}

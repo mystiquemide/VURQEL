@@ -17,6 +17,9 @@ commit `939d3bd1b05ee09f0f4c2585a492f98da0fd066d`).
 | [`exposed/receipt.json`](exposed/receipt.json) | `EXPOSED` | Source‑linked receipt + snapshot bookmark |
 | [`broken/hydradb-path.json`](broken/hydradb-path.json) | `UNPROVEN` | **No path** (`path: null`, 0 nodes) — only 4 of 7 edges were written |
 | [`broken/receipt.json`](broken/receipt.json) | `UNPROVEN` | `UNPROVEN_SHA_MISMATCH` |
+| [`blast-radius/result.json`](blast-radius/result.json) | mixed | Illustrative multi-service fan-out (Track 02A): confirmed exposed set = 2 of 4 candidates |
+
+> `blast-radius/result.json` is an **illustrative, synthetic** multi-service scenario (not the verified TanStack case). It runs the same per-service path check across four candidate apps and returns the confirmed exposed set `{acme-web, acme-api}`, excluding a staging build (`NOT_EXPOSED_NO_PRODUCTION_BUILD`) and a SHA mismatch (`UNPROVEN_SHA_MISMATCH`). Regenerate with `pnpm run hydradb:up && pnpm run blast-radius -- --pretty`.
 
 ## The 30‑second read
 

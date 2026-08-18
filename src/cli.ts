@@ -23,6 +23,8 @@ import { investigate } from "./investigate.js";
 import { parseInstant } from "./domain/evaluate.js";
 import type { EvidenceBundle, InvestigationRequest } from "./domain/schema.js";
 import { tanstackEvidence, tanstackRequest } from "./fixtures/tanstack.js";
+import { computeBlastRadius } from "./blast-radius.js";
+import { ILLUSTRATIVE_REQUEST, ILLUSTRATIVE_BUNDLES } from "./fixtures/blast-radius.js";
 
 const USAGE = `Usage: vurqel investigate [options]
 
@@ -46,7 +48,11 @@ Options:
   -h, --help              Show this help
 
 With no request flags, the built-in verified TanStack case is used. Add --live to
-fetch that case's evidence from GitHub instead of the bundled replay.`;
+fetch that case's evidence from GitHub instead of the bundled replay.
+
+vurqel blast-radius [--pretty]
+  Runs an ILLUSTRATIVE multi-service blast-radius traversal (a synthetic scenario,
+  not the verified case) and prints the confirmed exposed set of services.`;
 
 interface Args {
   flags: Map<string, string>;
@@ -197,6 +203,21 @@ async function main(): Promise<number> {
   if (args.bools.has("help") || subcommand === undefined) {
     process.stdout.write(`${USAGE}\n`);
     return subcommand === undefined ? 2 : 0;
+  }
+  if (subcommand === "blast-radius") {
+    const config = loadHydraDbConfig();
+    const client = new HydraDbClient(config);
+    if (!(await client.ready())) {
+      process.stderr.write(`HydraDB is not reachable at ${config.adminUrl}. Run \`pnpm hydradb:up\` first.\n`);
+      return 1;
+    }
+    const radius = await computeBlastRadius(client, ILLUSTRATIVE_REQUEST, ILLUSTRATIVE_BUNDLES);
+    process.stderr.write(
+      `[vurqel] blast-radius: ILLUSTRATIVE multi-service scenario (synthetic, not the verified TanStack case). ` +
+        `exposed=${radius.exposed.length}/${radius.candidates} db=${config.httpUrl}\n`,
+    );
+    process.stdout.write(`${JSON.stringify(radius, null, args.bools.has("pretty") ? 2 : 0)}\n`);
+    return 0;
   }
   if (subcommand !== "investigate") {
     process.stderr.write(`Unknown command "${subcommand}".\n\n${USAGE}\n`);

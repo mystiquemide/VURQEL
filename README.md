@@ -78,6 +78,15 @@ Because an edge exists only when its hop was verified, a complete Incident to Se
 
 A vector store cannot answer this. The question is not "what is similar" but "does a complete typed path joined on one exact commit SHA exist in this snapshot?" Nearest-neighbor similarity cannot prove path completeness, cannot refuse on a single broken hop (`UNPROVEN`), and cannot assert a clean negative (`NOT_EXPOSED`).
 
+## Track 02A: what this proves, and its blast radius
+
+Hack Hydra Track 02A asks, among other things, *"which applications resolved the compromised version while it was live?"* and *"which internal services are exposed?"* Vurqel answers exactly that, without guessing, at two scopes:
+
+- **One incident, one build (the verified case):** the depth proof above — a complete same-SHA path, or `UNPROVEN`/`NOT_EXPOSED`, with public sources and a snapshot bookmark.
+- **Blast radius (fan-out):** `pnpm run blast-radius` runs the *same* graph-native path check across many candidate services and returns the **confirmed exposed set** — the services with a complete same-SHA production path — separating them from services that merely built (`NOT_EXPOSED`, e.g. staging) or that cannot be concluded (`UNPROVEN`). Real HydraDB output for an illustrative four-service scenario is in [`proof/blast-radius/result.json`](proof/blast-radius/result.json) (confirmed exposed: 2 of 4). The blast radius is "which services provably shipped the bad version," not "which mention the package."
+
+**Deliberately out of scope**, so the proof stays honest and reproducible: ecosystem-wide reverse-dependency closure over tens of millions of versioned nodes, shared-maintainer graphs, and typosquat proximity. Vurqel trades breadth for a verdict a judge — or an on-call engineer — can trust and reproduce. That graph-native rigor (path-completeness *is* the verdict; the fail-closed refusal; a question no vector store can answer) is what it puts forward for **Best Use of HydraDB**.
+
 ## Architecture
 
 ```mermaid

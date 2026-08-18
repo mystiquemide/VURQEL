@@ -24,3 +24,4 @@ planning/
 # Agent/session artifacts and internal audit docs (never part of the public repo)
 .qwen/
 WEBSITE_UX_AUDIT.md
+CODE_REVIEW.md
