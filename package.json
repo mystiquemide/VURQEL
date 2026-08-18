@@ -3,7 +3,26 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Vurqel - temporal supply-chain exposure proof (Track 2A). Proves which historical builds resolved a compromised package during its live window, down to commit, frozen CI job, and production-labelled service build.",
+  "description": "Temporal supply-chain exposure proof: proves which historical builds resolved a compromised package during its live window, down to the commit, frozen-lockfile CI job, and production-labelled service build, with a source-linked receipt backed by a HydraDB graph path.",
+  "keywords": [
+    "supply-chain",
+    "security",
+    "provenance",
+    "hydradb",
+    "graph",
+    "sbom",
+    "incident-response"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mystiquemide/VURQEL.git"
+  },
+  "homepage": "https://github.com/mystiquemide/VURQEL#readme",
+  "bugs": {
+    "url": "https://github.com/mystiquemide/VURQEL/issues"
+  },
+  "author": "MystiqueMide",
+  "license": "MIT",
   "engines": {
     "node": ">=22"
   },
