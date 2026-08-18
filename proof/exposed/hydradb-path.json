@@ -1,0 +1,250 @@
+{
+  "mode": "exposed",
+  "verdict": "EXPOSED",
+  "reasonCode": "EXPOSED_SAME_SHA_PATH",
+  "query": "CALL algo.SPpaths({\n  sourceNode: <incidentId>, targetNode: <serviceId>,\n  relTypes: ['AFFECTS','RESOLVED_BY','AT_COMMIT','TRIGGERS','HAS_JOB','PRODUCES','TARGETS'],\n  maxLen: 8, relDirection: 'outgoing', pathCount: 1\n}) YIELD path, pathWeight, pathCost RETURN path, pathWeight, pathCost   // consistency: strong",
+  "incidentId": 1774008131,
+  "serviceId": 1786815146,
+  "snapshot": {
+    "bookmark": "sgk:1:64656661756c74:64656661756c74:63656c6c2d30:15",
+    "readEpoch": 15
+  },
+  "pathComplete": true,
+  "pathNodeCount": 8,
+  "pathRelCount": 7,
+  "graphNodeCount": 8,
+  "graphEdgeCount": 7,
+  "path": {
+    "nodes": [
+      {
+        "id": 1774008131,
+        "labels": [
+          "Incident"
+        ],
+        "properties": {
+          "liveFrom": {
+            "String": "2026-05-11T19:26:14Z"
+          },
+          "liveUntil": {
+            "String": "2026-05-11T22:13:38Z"
+          },
+          "packageName": {
+            "String": "@tanstack/react-router"
+          },
+          "sourceUrl": {
+            "String": "https://www.stepsecurity.io/blog/mini-shai-hulud-is-back-a-self-spreading-supply-chain-attack-hits-the-npm-ecosystem"
+          },
+          "version": {
+            "String": "1.169.8"
+          }
+        }
+      },
+      {
+        "id": 877433888,
+        "labels": [
+          "PackageVersion"
+        ],
+        "properties": {
+          "ecosystem": {
+            "String": "npm"
+          },
+          "name": {
+            "String": "@tanstack/react-router"
+          },
+          "purl": {
+            "String": "pkg:npm/%40tanstack/react-router@1.169.8"
+          },
+          "sourceUrl": {
+            "String": "https://www.stepsecurity.io/blog/mini-shai-hulud-is-back-a-self-spreading-supply-chain-attack-hits-the-npm-ecosystem"
+          },
+          "version": {
+            "String": "1.169.8"
+          }
+        }
+      },
+      {
+        "id": 3012857152,
+        "labels": [
+          "LockfileSnapshot"
+        ],
+        "properties": {
+          "commitSha": {
+            "String": "939d3bd1b05ee09f0f4c2585a492f98da0fd066d"
+          },
+          "contentHash": {
+            "String": "sha256:04916898507a414af7e59f9083ade5f604a0358ae676ad216e50d0f605330f6d"
+          },
+          "path": {
+            "String": "tools/pnpm-lock.yaml"
+          },
+          "resolvedName": {
+            "String": "@tanstack/react-router"
+          },
+          "resolvedVersion": {
+            "String": "1.169.8"
+          },
+          "sourceUrl": {
+            "String": "https://github.com/RelativeSure/websites/blob/939d3bd1b05ee09f0f4c2585a492f98da0fd066d/tools/pnpm-lock.yaml"
+          }
+        }
+      },
+      {
+        "id": 2185102062,
+        "labels": [
+          "GitCommit"
+        ],
+        "properties": {
+          "committedAt": {
+            "String": "2026-05-11T21:40:47Z"
+          },
+          "message": {
+            "String": "chore(deps): update dependency @tanstack/react-router to v1.169.8 (#718)"
+          },
+          "sha": {
+            "String": "939d3bd1b05ee09f0f4c2585a492f98da0fd066d"
+          },
+          "url": {
+            "String": "https://github.com/RelativeSure/websites/commit/939d3bd1b05ee09f0f4c2585a492f98da0fd066d"
+          }
+        }
+      },
+      {
+        "id": 2736456073,
+        "labels": [
+          "WorkflowRun"
+        ],
+        "properties": {
+          "conclusion": {
+            "String": "failure"
+          },
+          "headSha": {
+            "String": "939d3bd1b05ee09f0f4c2585a492f98da0fd066d"
+          },
+          "runId": {
+            "String": "25698962181"
+          },
+          "url": {
+            "String": "https://github.com/RelativeSure/websites/actions/runs/25698962181"
+          }
+        }
+      },
+      {
+        "id": 676819375,
+        "labels": [
+          "CIJob"
+        ],
+        "properties": {
+          "conclusion": {
+            "String": "success"
+          },
+          "headSha": {
+            "String": "939d3bd1b05ee09f0f4c2585a492f98da0fd066d"
+          },
+          "name": {
+            "String": "Build (tools)"
+          },
+          "url": {
+            "String": "https://github.com/RelativeSure/websites/actions/runs/25698962181"
+          }
+        }
+      },
+      {
+        "id": 1535634214,
+        "labels": [
+          "ServiceBuild"
+        ],
+        "properties": {
+          "checkRunId": {
+            "String": "75454451577"
+          },
+          "environmentLabel": {
+            "String": "production"
+          },
+          "headSha": {
+            "String": "939d3bd1b05ee09f0f4c2585a492f98da0fd066d"
+          },
+          "provider": {
+            "String": "cloudflare"
+          },
+          "service": {
+            "String": "websites-tools"
+          },
+          "status": {
+            "String": "success"
+          },
+          "url": {
+            "String": "https://github.com/RelativeSure/websites/runs/75454451577"
+          }
+        }
+      },
+      {
+        "id": 1786815146,
+        "labels": [
+          "Service"
+        ],
+        "properties": {
+          "environmentLabel": {
+            "String": "production"
+          },
+          "provider": {
+            "String": "cloudflare"
+          },
+          "service": {
+            "String": "websites-tools"
+          }
+        }
+      }
+    ],
+    "relationships": [
+      {
+        "id": null,
+        "edge_type": "AFFECTS",
+        "src": 1774008131,
+        "dst": 877433888,
+        "properties": {}
+      },
+      {
+        "id": null,
+        "edge_type": "RESOLVED_BY",
+        "src": 877433888,
+        "dst": 3012857152,
+        "properties": {}
+      },
+      {
+        "id": null,
+        "edge_type": "AT_COMMIT",
+        "src": 3012857152,
+        "dst": 2185102062,
+        "properties": {}
+      },
+      {
+        "id": null,
+        "edge_type": "TRIGGERS",
+        "src": 2185102062,
+        "dst": 2736456073,
+        "properties": {}
+      },
+      {
+        "id": null,
+        "edge_type": "HAS_JOB",
+        "src": 2736456073,
+        "dst": 676819375,
+        "properties": {}
+      },
+      {
+        "id": null,
+        "edge_type": "PRODUCES",
+        "src": 676819375,
+        "dst": 1535634214,
+        "properties": {}
+      },
+      {
+        "id": null,
+        "edge_type": "TARGETS",
+        "src": 1535634214,
+        "dst": 1786815146,
+        "properties": {}
+      }
+    ]
+  }
+}

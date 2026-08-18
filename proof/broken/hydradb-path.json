@@ -1,0 +1,19 @@
+{
+  "mode": "broken",
+  "verdict": "UNPROVEN",
+  "reasonCode": "UNPROVEN_SHA_MISMATCH",
+  "query": "CALL algo.SPpaths({\n  sourceNode: <incidentId>, targetNode: <serviceId>,\n  relTypes: ['AFFECTS','RESOLVED_BY','AT_COMMIT','TRIGGERS','HAS_JOB','PRODUCES','TARGETS'],\n  maxLen: 8, relDirection: 'outgoing', pathCount: 1\n}) YIELD path, pathWeight, pathCost RETURN path, pathWeight, pathCost   // consistency: strong",
+  "incidentId": 1774008131,
+  "serviceId": 1786815146,
+  "snapshot": {
+    "bookmark": "sgk:1:64656661756c74:64656661756c74:63656c6c2d30:12",
+    "readEpoch": 12
+  },
+  "pathComplete": false,
+  "pathNodeCount": 0,
+  "pathRelCount": 0,
+  "graphNodeCount": 8,
+  "graphEdgeCount": 4,
+  "note": "One CI-job SHA was mismatched. The HAS_JOB hop fails the same-SHA join (BR-001/BR-003), so the edge is never written and no complete incident->service path exists. HydraDB returns no path.",
+  "path": null
+}

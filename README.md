@@ -4,6 +4,8 @@ Temporal supply-chain exposure proof (Track 2A). Vurqel proves which historical 
 
 Winning invariant: **`EXPOSED` requires a complete same-SHA path from incident to a production build; a complete no-match is `NOT_EXPOSED`; missing or contradictory evidence is `UNPROVEN`.** Never a guess.
 
+The refusal is the proof: break one hop's SHA and HydraDB returns **no** complete path, so the verdict falls to `UNPROVEN` — the graph will not hand back a path it cannot verify. Both outcomes are captured as real HydraDB output in [`proof/`](proof/) (EXPOSED = full 8-node path with a snapshot bookmark; broken SHA = `path: null`), reproducible in ~30 seconds each.
+
 A real receipt for the verified case (full file: [`examples/receipts/tanstack-exposed.json`](examples/receipts/tanstack-exposed.json)):
 
 ```json
@@ -15,9 +17,14 @@ A real receipt for the verified case (full file: [`examples/receipts/tanstack-ex
   "snapshot": { "bookmark": "sgk:1:...:", "readEpoch": 113 }, "mode": "online" }
 ```
 
-## 90-second demo
+## Proof in 30 seconds
 
-Video: pending (link will be added here before submission). Until then the two outcomes are runnable in under two minutes (see Reproduce sections below): the verified case returns `EXPOSED`, and breaking any hop returns `NOT_EXPOSED` or `UNPROVEN`. Receipt and `NOT_EXPOSED` screenshots are pending the evidence-card UI.
+Two ways to verify the central claim without taking anything on faith:
+
+1. **Read [`proof/`](proof/)** — real `algo.SPpaths` output captured from a live HydraDB node. `exposed/` returns the complete 8-node same-SHA path with a snapshot bookmark; `broken/` (one mismatched CI-job SHA) returns `path: null`, and the verdict falls to `UNPROVEN`.
+2. **Run it** — `pnpm run hydradb:up && pnpm run investigate -- --pretty` prints the `EXPOSED` receipt; breaking a hop returns `NOT_EXPOSED` or `UNPROVEN` (see Reproduce below).
+
+Every classification-bearing field links to a public source (see the verified-case table), so the evidence itself is independently checkable.
 
 ## Verified public case
 
@@ -117,11 +124,11 @@ Breaking a hop (SHA mismatch or a workflow without a frozen install) returns `UN
 
 `pnpm test` runs 39 tests (0 skipped) against a live HydraDB node and live/cached GitHub: lockfile resolved-version and truncated-version parsing, half-open interval and case-insensitive SHA, SHA-mismatch and missing-frozen-install `UNPROVEN`, non-production and no-resolution `NOT_EXPOSED`, duplicate-ingest idempotency, the named-job-over-red-run rule, and a live-equals-fixture parity check. `pnpm run typecheck` is strict; there are zero runtime dependencies.
 
-Limitations (honest): unaudited hackathon build; one incident fully wired end to end (other public repos need explicit manifest selectors `--job`/`--service-check`/`--service`/`--env`); named job and check-run are selected by explicit name, not inferred; HydraDB's local object store cannot update flushed objects, so `hydradb:up` clean-starts each run (durable persistence needs an S3-compatible store); anonymous GitHub is 60/hour (cached, or set `GITHUB_TOKEN`); CLI only, no HTTP endpoint or browser evidence card yet; demo video and screenshots pending.
+Limitations (honest): unaudited hackathon build; one incident fully wired end to end (other public repos need explicit manifest selectors `--job`/`--service-check`/`--service`/`--env`); named job and check-run are selected by explicit name, not inferred; HydraDB's local object store cannot update flushed objects, so `hydradb:up` clean-starts each run (durable persistence needs an S3-compatible store); anonymous GitHub is 60/hour (cached, or set `GITHUB_TOKEN`); CLI-first, plus an editorial landing site in [`site/`](site/) that runs the same invariant client-side (an explainer, not a hosted HydraDB endpoint).
 
 ## Attribution and license
 
 - HydraDB (`hydra-db/hydradb`, AGPL-3.0) - the graph database that performs the load-bearing write and snapshot-scoped path read.
 - Incident sources - TanStack npm supply-chain postmortem and the StepSecurity advisory (linked above).
 - GitHub REST API and raw content - commit, lockfile, workflow, run, job, and check-run evidence.
-- Project license: pending selection (note HydraDB's AGPL-3.0 when choosing). No `LICENSE` file is committed yet.
+- Project license: **MIT** (see [`LICENSE`](LICENSE)). HydraDB is AGPL-3.0 and is used only as a separate networked service over its HTTP API, so its copyleft does not extend to Vurqel's own source.
