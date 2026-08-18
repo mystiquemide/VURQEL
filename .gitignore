@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Local HydraDB dev data (created by scripts/hydradb-up.sh)
+.hydradb/
+
+# Cached GitHub source responses (cached-replay + rate-limit conservation)
+.vurqel-cache/
+
+# Environment / secrets
+.env
+.env.local
+
+# Logs and OS cruft
+*.log
+.DS_Store

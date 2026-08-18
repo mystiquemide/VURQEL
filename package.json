@@ -1,0 +1,23 @@
+{
+  "name": "vurqel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Vurqel - temporal supply-chain exposure proof (Track 2A). Proves which historical builds resolved a compromised package during its live window, down to commit, frozen CI job, and production-labelled service build.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test test/*.test.ts",
+    "investigate": "node --import tsx src/cli.ts investigate",
+    "hydradb:up": "bash scripts/hydradb-up.sh",
+    "hydradb:down": "bash scripts/hydradb-down.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
