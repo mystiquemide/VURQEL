@@ -1,0 +1,4 @@
+export const intermissionCredit = {
+  photographer: "Neph DM",
+  url: "https://unsplash.com/photos/green-glowing-particles-forming-a-horizontal-pattern-on-dark-background-0RetI7YSzt8",
+};
