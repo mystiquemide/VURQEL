@@ -2,6 +2,8 @@
 
 Temporal supply-chain exposure proof (Track 2A). Vurqel proves which historical builds actually resolved a compromised package during its live window, down to the commit, the frozen-lockfile CI job, and the production-labelled service build, and returns a source-linked receipt backed by a graph path in HydraDB.
 
+**Live:** https://vurqel.splitpot.xyz · **Proof:** [`proof/`](proof/) — real HydraDB output (EXPOSED path + broken-SHA refusal).
+
 Winning invariant: **`EXPOSED` requires a complete same-SHA path from incident to a production build; a complete no-match is `NOT_EXPOSED`; missing or contradictory evidence is `UNPROVEN`.** Never a guess.
 
 The refusal is the proof: break one hop's SHA and HydraDB returns **no** complete path, so the verdict falls to `UNPROVEN` — the graph will not hand back a path it cannot verify. Both outcomes are captured as real HydraDB output in [`proof/`](proof/) (EXPOSED = full 8-node path with a snapshot bookmark; broken SHA = `path: null`), reproducible in ~30 seconds each.

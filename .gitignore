@@ -20,3 +20,7 @@ planning/
 # Logs and OS cruft
 *.log
 .DS_Store
+
+# Agent/session artifacts and internal audit docs (never part of the public repo)
+.qwen/
+WEBSITE_UX_AUDIT.md

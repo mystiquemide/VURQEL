@@ -152,7 +152,9 @@ export class HydraDbClient {
     for (const node of nodes) {
       assertNodeId(node.id);
       for (const key of Object.keys(node)) {
-        if (key !== "id") propertyKeys.add(key);
+        if (key === "id") continue;
+        assertPropertyKey(key);
+        propertyKeys.add(key);
       }
     }
     const sets = [`n:${label}`, ...[...propertyKeys].map((key) => `n.${key} = row.${key}`)].join(", ");
@@ -217,6 +219,13 @@ function assertLabel(label: string): void {
 function assertRelType(relType: string): void {
   if (!REL_PATTERN.test(relType)) {
     throw new HydraDbError("invalid_rel_type", `Invalid relationship type: ${relType}`);
+  }
+}
+
+/** Property keys are interpolated as `n.<key>`, so they must be bare identifiers (defense in depth). */
+function assertPropertyKey(key: string): void {
+  if (!LABEL_PATTERN.test(key)) {
+    throw new HydraDbError("invalid_property_key", `Invalid property key: ${key}`);
   }
 }
 
