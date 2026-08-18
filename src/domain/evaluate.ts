@@ -3,7 +3,7 @@
  * hop by hop against one evidence bundle and returns the result state, a reason
  * code, and per-hop verification flags. Pure and side-effect free (NFR-002).
  *
- * Key rules (PROJECT_PLAN.md BR-001..BR-008):
+ * Key rules (see docs/DESIGN.md, BR-001..BR-008):
  *  - All time comparisons use UTC and the half-open interval [from, to) (BR-006).
  *  - The same commit SHA must join lockfile, commit, run, job, and build (BR-001).
  *  - A lockfile entry alone is not proof; a frozen-install workflow and a

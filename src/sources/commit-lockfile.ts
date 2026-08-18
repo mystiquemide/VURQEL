@@ -13,7 +13,7 @@ import { createHash } from "node:crypto";
 
 import type { GitCommitRecord, InvestigationRequest, LockfileSnapshotRecord } from "../domain/schema.js";
 import { detectResolvedVersion } from "./pnpm-lock.js";
-import { GitHubClient, type SourceMode } from "./github.js";
+import { GitHubClient, SourceError, type SourceMode } from "./github.js";
 
 /** Subset of the GitHub commit list item we rely on. */
 interface CommitListItem {
@@ -63,7 +63,15 @@ export async function collectCommitLockfile(
     candidatesChecked += 1;
 
     const rawUrl = `${client.rawBaseUrl}/${owner}/${name}/${item.sha}/${path}`;
-    const blob = await client.getText(rawUrl);
+    let blob: { data: string; mode: SourceMode; url: string };
+    try {
+      blob = await client.getText(rawUrl);
+    } catch (err) {
+      // A missing blob at one candidate (e.g. GC'd after a force-push) must not
+      // abort the investigation; skip it. Retryable errors still propagate.
+      if (err instanceof SourceError && err.code === "not_found") continue;
+      throw err;
+    }
     mode = combineMode(mode, blob.mode);
 
     const hit = detectResolvedVersion(blob.data, request.packageName, request.version);

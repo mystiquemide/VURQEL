@@ -2,8 +2,8 @@
  * Runtime configuration for Vurqel.
  *
  * Values resolve from environment variables with development-safe defaults that
- * match the pinned HydraDB runtime validated in CP-001 (see PROJECT_STATE.md).
- * The HydraDB client transport is HTTP JSON (DEC-002).
+ * match the pinned local HydraDB runtime (see scripts/hydradb-up.sh). The
+ * HydraDB client transport is the HTTP JSON API.
  */
 
 export interface HydraDbConfig {

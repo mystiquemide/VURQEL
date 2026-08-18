@@ -1,8 +1,8 @@
 /**
- * The verified public TanStack case (Track 2A demo fixture).
+ * The verified public TanStack case (demo fixture).
  *
- * Every field below was independently confirmed against public sources on
- * 2026-08-18 (see PROJECT_STATE.md CP-002.2 evidence):
+ * Every field below was independently confirmed against the public source URLs
+ * on 2026-08-18:
  *  - @tanstack/react-router@1.169.8 is an affected second-batch version
  *    (StepSecurity) live within [19:26:14, 22:13:38) UTC (TanStack postmortem).
  *  - commit 939d3bd... committed 2026-05-11T21:40:47Z (inside the window).

@@ -1,7 +1,7 @@
 /**
  * Vurqel domain schema: canonical evidence records, the typed provenance graph,
  * result states, reason codes, and the receipt. Mirrors the graph model and the
- * winning invariant in PROJECT_PLAN.md (BR-001..BR-008).
+ * winning invariant in docs/DESIGN.md (BR-001..BR-008).
  *
  * The invariant, in short:
  *   EXPOSED requires one complete same-SHA path:
