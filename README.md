@@ -11,7 +11,7 @@
   <img alt="HydraDB" src="https://img.shields.io/badge/graph%20db-HydraDB-C0341D">
   <img alt="Next.js 14" src="https://img.shields.io/badge/Next.js-14-black?logo=nextdotjs&logoColor=white">
   <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white">
-  <img alt="Node >=22" src="https://img.shields.io/badge/node-%E2%89%A522-339933?logo=nodedotjs&logoColor=white">
+  <img alt="Node 22+" src="https://img.shields.io/badge/node-%E2%89%A522-339933?logo=nodedotjs&logoColor=white">
 </p>
 
 # Vurqel
