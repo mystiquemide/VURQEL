@@ -4,7 +4,7 @@ Temporal supply-chain exposure proof (Track 2A). Vurqel proves which historical 
 
 **Live:** https://vurqel.splitpot.xyz · **Proof:** [`proof/`](proof/) — real HydraDB output (EXPOSED path + broken-SHA refusal).
 
-Winning invariant: **`EXPOSED` requires a complete same-SHA path from incident to a production build; a complete no-match is `NOT_EXPOSED`; missing or contradictory evidence is `UNPROVEN`.** Never a guess.
+The invariant: **`EXPOSED` requires a complete same-SHA path from incident to a production build; a complete no-match is `NOT_EXPOSED`; missing or contradictory evidence is `UNPROVEN`.** Never a guess.
 
 The refusal is the proof: break one hop's SHA and HydraDB returns **no** complete path, so the verdict falls to `UNPROVEN` — the graph will not hand back a path it cannot verify. Both outcomes are captured as real HydraDB output in [`proof/`](proof/) (EXPOSED = full 8-node path with a snapshot bookmark; broken SHA = `path: null`), reproducible in ~30 seconds each.
 
@@ -78,14 +78,11 @@ Because an edge exists only when its hop was verified, a complete Incident to Se
 
 A vector store cannot answer this. The question is not "what is similar" but "does a complete typed path joined on one exact commit SHA exist in this snapshot?" Nearest-neighbor similarity cannot prove path completeness, cannot refuse on a single broken hop (`UNPROVEN`), and cannot assert a clean negative (`NOT_EXPOSED`).
 
-## Track 02A: what this proves, and its blast radius
+## Blast radius
 
-Hack Hydra Track 02A asks, among other things, *"which applications resolved the compromised version while it was live?"* and *"which internal services are exposed?"* Vurqel answers exactly that, without guessing, at two scopes:
+The same question scales from one build to many services: given a compromised package, *which of your production services actually shipped it?* `pnpm run blast-radius` runs the same graph-native path check across every candidate service and returns the **confirmed exposed set** — the services with a complete same-SHA production path — separating them from services that merely built (`NOT_EXPOSED`, e.g. staging) or that cannot be concluded (`UNPROVEN`). Real HydraDB output for an illustrative four-service scenario is in [`proof/blast-radius/result.json`](proof/blast-radius/result.json) (confirmed exposed: 2 of 4). The blast radius is which services provably shipped the bad version, not which mention the package.
 
-- **One incident, one build (the verified case):** the depth proof above — a complete same-SHA path, or `UNPROVEN`/`NOT_EXPOSED`, with public sources and a snapshot bookmark.
-- **Blast radius (fan-out):** `pnpm run blast-radius` runs the *same* graph-native path check across many candidate services and returns the **confirmed exposed set** — the services with a complete same-SHA production path — separating them from services that merely built (`NOT_EXPOSED`, e.g. staging) or that cannot be concluded (`UNPROVEN`). Real HydraDB output for an illustrative four-service scenario is in [`proof/blast-radius/result.json`](proof/blast-radius/result.json) (confirmed exposed: 2 of 4). The blast radius is "which services provably shipped the bad version," not "which mention the package."
-
-**Deliberately out of scope**, so the proof stays honest and reproducible: ecosystem-wide reverse-dependency closure over tens of millions of versioned nodes, shared-maintainer graphs, and typosquat proximity. Vurqel trades breadth for a verdict a judge — or an on-call engineer — can trust and reproduce. That graph-native rigor (path-completeness *is* the verdict; the fail-closed refusal; a question no vector store can answer) is what it puts forward for **Best Use of HydraDB**.
+Out of scope by design: ecosystem-wide reverse-dependency closure over tens of millions of versioned nodes, shared-maintainer graphs, and typosquat proximity. Vurqel trades breadth for a verdict an on-call engineer can trust and reproduce — path-completeness is the verdict, a single broken hop refuses, and it answers a question a vector store cannot.
 
 ## Architecture
 
@@ -135,9 +132,9 @@ Breaking a hop (SHA mismatch or a workflow without a frozen install) returns `UN
 
 `pnpm test` runs the pure unit tests with **no external dependencies** (evaluator branches, half-open interval and case-insensitive SHA, lockfile resolved/truncated-version parsing, receipt construction). The HydraDB + live/cached-GitHub integration suite — SHA-mismatch and missing-frozen-install `UNPROVEN`, non-production and no-resolution `NOT_EXPOSED`, duplicate-ingest idempotency, the named-job-over-red-run rule, a live-equals-fixture parity check, and the blast-radius fan-out — runs with `pnpm run hydradb:up && pnpm run test:integration` (or `pnpm run test:all` for both; 40 tests, 0 skipped). `pnpm run typecheck` is strict; there are zero runtime dependencies.
 
-Limitations (honest): unaudited hackathon build; one incident fully wired end to end (other public repos need explicit manifest selectors `--job`/`--service-check`/`--service`/`--env`); named job and check-run are selected by explicit name, not inferred; HydraDB's local object store cannot update flushed objects, so `hydradb:up` clean-starts each run (durable persistence needs an S3-compatible store); anonymous GitHub is 60/hour (cached, or set `GITHUB_TOKEN`); CLI-first, plus an editorial landing site in [`site/`](site/) that runs the same invariant client-side (an explainer, not a hosted HydraDB endpoint).
+Limitations: unaudited hackathon build; one incident fully wired end to end (other public repos need explicit manifest selectors `--job`/`--service-check`/`--service`/`--env`); named job and check-run are selected by explicit name, not inferred; HydraDB's local object store cannot update flushed objects, so `hydradb:up` clean-starts each run (durable persistence needs an S3-compatible store); anonymous GitHub is 60/hour (cached, or set `GITHUB_TOKEN`); CLI-first, plus an editorial landing site in [`site/`](site/) that runs the same invariant client-side (an explainer, not a hosted HydraDB endpoint).
 
-Trust assumptions (stated plainly, because the point is not to overclaim): the `production` environment label is an operator manifest declaration (`--service-check`/`--env`, DEC-003) corroborated by the named check-run — it is not yet fetched from a deployment/environment API, so treat it as declared, not independently proven. Frozen-install is detected by a text heuristic over the workflow file (zero runtime dependencies, so no per-job YAML parse); for an arbitrary repo, confirm the directive runs in the selected job. The verdict is always computed by the pure evaluator and the HydraDB path read is a fail-closed backstop, so a shared or persistent graph cannot flip a verdict; multi-investigation isolation in a durable store would use a per-investigation cell/namespace (the local demo clean-starts, which isolates it).
+Assumptions: the `production` environment label comes from the explicit service selector (`--service-check`/`--env`) corroborated by the named check-run — it is not fetched from a deployment API, so treat it as declared. Frozen-install is detected from the workflow file text (there are zero runtime dependencies, so no per-job YAML parse); for an arbitrary repo, confirm the directive runs in the selected job. The verdict is computed by the deterministic evaluator and the HydraDB path read is a fail-closed check, so a shared or persistent graph cannot change a verdict; the local demo clean-starts each run.
 
 ## Attribution and license
 
