@@ -30,7 +30,7 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "tsc -p tsconfig.json",
-    "test": "node --import tsx --test test/evaluate.test.ts test/pnpm-lock.test.ts test/receipt.test.ts",
+    "test": "node --import tsx --test test/evaluate.test.ts test/pnpm-lock.test.ts test/receipt.test.ts test/investigate-arbiter.test.ts",
     "test:integration": "node --import tsx --test test/*.integration.test.ts",
     "test:all": "node --import tsx --test test/*.test.ts",
     "investigate": "node --import tsx src/cli.ts investigate",

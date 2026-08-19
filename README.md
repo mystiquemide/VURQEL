@@ -72,7 +72,7 @@ Vurqel answers historical exposure: it verifies each hop on the same commit SHA 
 2. **Verify** each hop on the *same commit SHA* — resolution, frozen install, run, job conclusion, production build. A missing or mismatched hop is recorded as unverified.
 3. **Write** a typed provenance graph to HydraDB, adding an edge only for a hop that verified.
 4. **Read** one bounded, snapshot-consistent path from incident to service (`algo.SPpaths`).
-5. **Emit** a source-linked receipt — `EXPOSED` if the path is complete, `NOT_EXPOSED` if the chain is complete but there is no match, `UNPROVEN` if evidence is missing or contradictory.
+5. **Issue the verdict from the graph** — `EXPOSED` is emitted only when HydraDB returns the complete same-SHA path; if it does not, Vurqel abstains (`UNPROVEN`) rather than assert an exposure the graph cannot back. A complete chain with no eligible path is `NOT_EXPOSED`; missing or contradictory evidence is `UNPROVEN`.
 
 ## How HydraDB proves it
 
@@ -98,7 +98,7 @@ CALL algo.SPpaths({ sourceNode: <incidentId>, targetNode: <serviceId>,
   maxLen: 8, relDirection: 'outgoing', pathCount: 1 }) YIELD path RETURN path   // consistency: strong
 ```
 
-Because an edge exists only when its hop was verified, a complete Incident to Service path is returned only when the result is `EXPOSED`, and the receipt carries the snapshot bookmark and read epoch as proof of which graph state answered.
+Because an edge exists only when its hop was verified, a complete Incident to Service path is returned only when every hop holds — and Vurqel **issues `EXPOSED` from that path read**, not from an in-process boolean. If HydraDB does not return the complete path, the verdict falls to `UNPROVEN`: delete the graph read and no `EXPOSED` can be produced. The receipt carries the snapshot bookmark and read epoch as proof of which graph state answered.
 
 A vector store cannot answer this. The question is not "what is similar" but "does a complete typed path joined on one exact commit SHA exist in this snapshot?" Nearest-neighbor similarity cannot prove path completeness, cannot refuse on a single broken hop (`UNPROVEN`), and cannot assert a clean negative (`NOT_EXPOSED`).
 

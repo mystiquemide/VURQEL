@@ -69,7 +69,7 @@ CALL algo.SPpaths({ sourceNode: <incidentId>, targetNode: <serviceId>,
   maxLen: 8, relDirection: 'outgoing', pathCount: 1 }) YIELD path RETURN path   // consistency: strong
 ```
 
-Because an edge exists only when its hop was verified, a complete path is returned only when the result is `EXPOSED`, and the receipt records the snapshot bookmark and read epoch. A vector store cannot answer this: the question is exact same-SHA path completeness on one snapshot, not similarity.
+Because an edge exists only when its hop was verified, a complete path is returned only when every hop holds — and the `EXPOSED` verdict is **issued from that path read**, not from an in-process boolean. If HydraDB does not return the complete path, the verdict falls to `UNPROVEN` (`UNPROVEN_INCOMPLETE_PROOF_PATH`): remove the graph read and no `EXPOSED` can be produced. The receipt records the snapshot bookmark and read epoch. A vector store cannot answer this: the question is exact same-SHA path completeness on one snapshot, not similarity.
 
 ## Evidence and determinism
 

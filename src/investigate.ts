@@ -4,16 +4,17 @@
  * Ties the pure domain (evaluate -> graph -> receipt) to the HydraDB sponsor
  * boundary: it ingests the typed provenance graph, reads the bounded
  * `incident -> service` path back under one strong snapshot, and returns a
- * source-linked receipt carrying that snapshot bookmark (FR-008, FR-009,
- * FR-011). A complete path exists in HydraDB only when the evaluator returns
- * EXPOSED, so the graph read is the graph-native realization of the invariant.
+ * source-linked receipt carrying that snapshot bookmark (FR-008, FR-009, FR-011).
  *
- * Fail-closed: if the evaluator concludes EXPOSED but HydraDB does not return
- * the complete same-SHA path, this raises rather than emitting an EXPOSED
- * receipt the graph cannot back (no client-side substitute is accepted).
+ * HydraDB issues the affirmative verdict. The evaluator verifies each hop and
+ * builds the typed graph, but EXPOSED is emitted only when HydraDB's `algo.SPpaths`
+ * returns the complete same-SHA Incident->Service path under one strong snapshot.
+ * If the graph cannot return that path, Vurqel abstains (UNPROVEN) rather than
+ * assert an exposure the graph does not back. Delete the graph read and no EXPOSED
+ * can be produced: the path, not the in-process evaluator, is the arbiter.
  */
 import type { HydraDbClient } from "./hydradb/client.js";
-import { HydraDbError, type HydraPath } from "./hydradb/types.js";
+import type { HydraPath } from "./hydradb/types.js";
 import { evaluateInvestigation, type Evaluation } from "./domain/evaluate.js";
 import { buildProvenanceGraph, type BuiltGraph } from "./domain/graph.js";
 import { buildReceipt } from "./domain/receipt.js";
@@ -122,25 +123,31 @@ export async function investigate(
     }
   }
 
-  // Fail closed: an EXPOSED verdict must be backed by the complete HydraDB path.
-  if (evaluation.state === "EXPOSED") {
-    const complete =
-      path !== null &&
-      path.nodes.length === graph.nodes.length &&
-      path.relationships.length === PROVENANCE_EDGE_ORDER.length;
-    if (!complete) {
-      throw new HydraDbError(
-        "incomplete_proof_path",
-        "Evaluator concluded EXPOSED but HydraDB did not return the complete same-SHA provenance path; refusing to emit an unbacked EXPOSED receipt.",
-      );
-    }
+  // HydraDB is the arbiter of the affirmative verdict. The evaluator verified each
+  // hop and built the graph; EXPOSED is issued only when algo.SPpaths returns the
+  // complete same-SHA path under the read snapshot. If it does not, abstain
+  // (UNPROVEN) rather than assert an exposure the graph cannot prove.
+  const pathComplete =
+    path !== null &&
+    path.nodes.length === graph.nodes.length &&
+    path.relationships.length === PROVENANCE_EDGE_ORDER.length;
+
+  let decided: Evaluation = evaluation;
+  if (evaluation.state === "EXPOSED" && !pathComplete) {
+    decided = {
+      ...evaluation,
+      state: "UNPROVEN",
+      reasonCode: "UNPROVEN_INCOMPLETE_PROOF_PATH",
+      reason:
+        "Every hop verified against the evidence, but HydraDB did not return the complete same-SHA path under the read snapshot; Vurqel abstains rather than assert an exposure the graph cannot prove.",
+    };
   }
 
-  const receipt = buildReceipt(request, evidence, evaluation, {
+  const receipt = buildReceipt(request, evidence, decided, {
     snapshot,
     generatedAt: options.generatedAt,
     mode: options.mode,
   });
 
-  return { request, evaluation, graph, path, receipt };
+  return { request, evaluation: decided, graph, path, receipt };
 }
