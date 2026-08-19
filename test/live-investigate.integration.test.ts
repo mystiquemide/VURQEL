@@ -3,7 +3,7 @@
  *
  * Collects the verified TanStack case's evidence LIVE from public GitHub (then
  * cache), runs `investigate` against HydraDB, and asserts the receipt carries
- * the same load-bearing proof as the hand-authored fixture — commit, lockfile
+ * the same core proof as the hand-authored fixture — commit, lockfile
  * hash, named job, workflow run, and Cloudflare production check-run — with the
  * complete same-SHA path returned from the graph. This is the Phase 2 exit
  * gate: "the verified public case can be normalized without manually editing
@@ -26,7 +26,7 @@ import { tanstackEvidence, tanstackRequest } from "../src/fixtures/tanstack.js";
 const hydra = new HydraDbClient(loadHydraDbConfig());
 const FIXED = { generatedAt: "2026-08-18T12:00:00Z" };
 
-/** The load-bearing proof fields that must be identical between live and fixture. */
+/** The core proof fields that must be identical between live and fixture. */
 const proof = (r: Receipt) => ({
   state: r.state,
   reasonCode: r.reasonCode,

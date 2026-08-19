@@ -43,7 +43,7 @@ export function colorEnabled(stream: WriteStream): boolean {
   return Boolean(stream.isTTY);
 }
 
-function unicodeEnabled(): boolean {
+export function unicodeEnabled(): boolean {
   if (process.env.TERM === "linux" || process.env.TERM === "dumb") return false;
   const enc = `${process.env.LC_ALL ?? ""} ${process.env.LC_CTYPE ?? ""} ${process.env.LANG ?? ""}`.toUpperCase();
   if (enc.trim() !== "" && !enc.includes("UTF")) return false;
@@ -62,7 +62,7 @@ function widthOf(stream: WriteStream): number {
 
 // --- style -----------------------------------------------------------------
 
-interface Style {
+export interface Style {
   on: boolean;
   bold(s: string): string;
   dim(s: string): string;
@@ -75,7 +75,7 @@ interface Style {
   brand(s: string): string;
 }
 
-function makeStyle(on: boolean): Style {
+export function makeStyle(on: boolean): Style {
   const wrap = (code: string) => (s: string): string => (on ? `${ESC}${code}m${s}${ESC}0m` : s);
   return {
     on,
@@ -92,7 +92,7 @@ function makeStyle(on: boolean): Style {
   };
 }
 
-interface Symbols {
+export interface Symbols {
   ok: string;
   err: string;
   warn: string;
@@ -105,7 +105,7 @@ interface Symbols {
   box: { tl: string; tr: string; bl: string; br: string; h: string; v: string };
 }
 
-function makeSymbols(unicode: boolean): Symbols {
+export function makeSymbols(unicode: boolean): Symbols {
   if (unicode) {
     return {
       ok: "✓", err: "✗", warn: "!", info: "i", active: "●", inactive: "○",
@@ -400,6 +400,7 @@ export function welcome(): void {
   w.write(`  ${c.s.bold("Get started")}\n`);
   w.write(`    ${c.s.dim("$")} ${c.s.cyan("pnpm run hydradb:up")}                 ${c.s.dim("# start the pinned HydraDB node")}\n`);
   w.write(`    ${c.s.dim("$")} ${c.s.cyan("pnpm run investigate -- --pretty")}    ${c.s.dim("# prove the verified case")}\n`);
+  w.write(`    ${c.s.dim("$")} ${c.s.cyan("pnpm run tui")}                        ${c.s.dim("# interactive full-screen mode")}\n`);
   w.write(`    ${c.s.dim("$")} ${c.s.cyan("vurqel --help")}                       ${c.s.dim("# all commands")}\n\n`);
   w.write(`  ${c.s.bold("Docs")}\n    ${c.s.underline(DOCS)}\n\n`);
 }

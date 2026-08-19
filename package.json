@@ -35,6 +35,7 @@
     "test:all": "node --import tsx --test test/*.test.ts",
     "investigate": "node --import tsx src/cli.ts investigate",
     "blast-radius": "node --import tsx src/cli.ts blast-radius",
+    "tui": "node --import tsx src/cli.ts tui",
     "hydradb:up": "bash scripts/hydradb-up.sh",
     "hydradb:down": "bash scripts/hydradb-down.sh"
   },

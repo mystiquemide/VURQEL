@@ -59,7 +59,7 @@ Public GitHub (commits, lockfile blob, workflow, runs, jobs, check-runs)
 
 The domain layer is pure and independently unit-tested; the HydraDB and GitHub layers are integration-tested against a live node and live/cached GitHub.
 
-## Why HydraDB is load-bearing
+## Why HydraDB, specifically
 
 The proof is a graph path, not an in-memory boolean. Writes go through the documented HTTP client boundary as a batched `UNWIND` upsert (`MERGE` by non-negative integer id, then `SET` one label and scalar properties), and the receipt comes from a single bounded, snapshot-consistent traversal:
 

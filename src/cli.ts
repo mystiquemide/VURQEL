@@ -29,6 +29,7 @@ import { tanstackEvidence, tanstackRequest } from "./fixtures/tanstack.js";
 import { computeBlastRadius } from "./blast-radius.js";
 import { ILLUSTRATIVE_REQUEST, ILLUSTRATIVE_BUNDLES } from "./fixtures/blast-radius.js";
 import * as ui from "./ui/index.js";
+import { runTui } from "./ui/tui.js";
 
 const DOCS = "https://github.com/mystiquemide/vurqel";
 
@@ -185,6 +186,7 @@ function printHelp(): void {
     [
       { name: "investigate", summary: "Prove exposure for one incident (verified case by default)" },
       { name: "blast-radius", summary: "Confirmed exposed services across a multi-service scenario" },
+      { name: "tui", summary: "Interactive full-screen mode" },
     ],
     [
       { flag: "--live", summary: "Fetch evidence live from public GitHub" },
@@ -388,6 +390,7 @@ async function main(): Promise<number> {
     if (args.bools.has("version")) { ui.version(); return 0; }
     if (args.bools.has("help")) { printHelp(); return 0; }
     if (subcommand === undefined) { ui.welcome(); return 0; }
+    if (subcommand === "tui") return await runTui();
     if (subcommand === "blast-radius") return await blastRadiusFlow(args);
     if (subcommand === "investigate") return await investigateFlow(args, verbose);
 
