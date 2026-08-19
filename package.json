@@ -23,6 +23,7 @@
   },
   "author": "MystiqueMide",
   "license": "MIT",
+  "packageManager": "pnpm@11.8.0",
   "engines": {
     "node": ">=22"
   },

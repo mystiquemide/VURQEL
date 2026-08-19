@@ -1,3 +1,19 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.svg">
+    <img alt="Vurqel" src="docs/logo-light.svg" width="300">
+  </picture>
+</p>
+
+<p align="center">
+  <a href="https://github.com/mystiquemide/vurqel/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/mystiquemide/vurqel/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-black"></a>
+  <img alt="HydraDB" src="https://img.shields.io/badge/graph%20db-HydraDB-C0341D">
+  <img alt="Next.js 14" src="https://img.shields.io/badge/Next.js-14-black?logo=nextdotjs&logoColor=white">
+  <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white">
+  <img alt="Node >=22" src="https://img.shields.io/badge/node-%E2%89%A522-339933?logo=nodedotjs&logoColor=white">
+</p>
+
 # Vurqel
 
 Temporal supply-chain exposure proof (Track 2A). Vurqel is a CLI that proves which historical builds actually resolved a compromised package during its live window, down to the commit, the frozen-lockfile CI job, and the production-labelled service build, and returns a source-linked receipt backed by a graph path in HydraDB.
@@ -50,6 +66,14 @@ Generic tooling answers dependency closure: "is this package present or flagged?
 
 Vurqel answers historical exposure: it verifies each hop on the same commit SHA and only concludes `EXPOSED` when the whole chain is present. A missing frozen install, a mismatched SHA, or unretrieved history yields `UNPROVEN`, not a false negative. This separation of absence (`NOT_EXPOSED`) from missing evidence (`UNPROVEN`) is the whole point.
 
+## How it works
+
+1. **Collect** evidence from public GitHub for one incident window: the lockfile at a commit, the workflow run, the named CI job, and the production service-build check-run.
+2. **Verify** each hop on the *same commit SHA* — resolution, frozen install, run, job conclusion, production build. A missing or mismatched hop is recorded as unverified.
+3. **Write** a typed provenance graph to HydraDB, adding an edge only for a hop that verified.
+4. **Read** one bounded, snapshot-consistent path from incident to service (`algo.SPpaths`).
+5. **Emit** a source-linked receipt — `EXPOSED` if the path is complete, `NOT_EXPOSED` if the chain is complete but there is no match, `UNPROVEN` if evidence is missing or contradictory.
+
 ## How HydraDB proves it
 
 The proof is a graph path, not an in-memory boolean. Vurqel writes typed nodes (`Incident`, `PackageVersion`, `LockfileSnapshot`, `GitCommit`, `WorkflowRun`, `CIJob`, `ServiceBuild`, `Service`) and typed edges, but only for hops the evaluator verified:
@@ -95,18 +119,33 @@ flowchart LR
   RC --> CLI[vurqel investigate CLI JSON]
 ```
 
-## Run locally
+## Install and run
 
 Requirements: Node >= 22, pnpm, Docker. HydraDB is pinned by digest (`ghcr.io/hydra-db/hydradb@sha256:db78309a...cdb709`, server 0.1.0).
 
 ```bash
 git clone https://github.com/mystiquemide/vurqel.git && cd vurqel
 pnpm install
-pnpm run hydradb:up      # clean-starts the pinned node (env: see .env.example)
-pnpm run investigate -- --live --pretty   # seed + query in one command
+pnpm run hydradb:up                       # clean-starts the pinned HydraDB node
+pnpm run investigate -- --pretty          # verified TanStack case (bundled replay) -> EXPOSED
 ```
 
-`GITHUB_TOKEN` is optional (raises the anonymous 60/hour limit). Copy `.env.example` to `.env` for local settings; never commit `.env`.
+Commands:
+
+```bash
+pnpm run investigate -- --pretty          # bundled replay of the verified case -> EXPOSED receipt
+pnpm run investigate -- --live --pretty   # fetch the same evidence live from public GitHub
+pnpm run blast-radius -- --pretty         # illustrative multi-service "which services are exposed" set
+
+# investigate any repo / package / incident window:
+pnpm run investigate -- --live \
+  --repo OWNER/NAME --lockfile path/to/pnpm-lock.yaml \
+  --package @scope/name --version X.Y.Z \
+  --from 2026-05-11T19:26:14Z --to 2026-05-11T22:13:38Z --incident-url https://advisory... \
+  --job "Build (tools)" --service-check "Workers Builds: my-service" --service my-service --env production
+```
+
+`GITHUB_TOKEN` is optional (raises the anonymous 60/hour limit). Copy `.env.example` to `.env`; never commit `.env`.
 
 ## Reproduce the positive case
 
