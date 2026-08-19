@@ -23,7 +23,7 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
-const siteOrigin = process.env.NEXT_PUBLIC_SITE_ORIGIN ?? "https://vurqel.splitpot.xyz";
+const siteOrigin = process.env.NEXT_PUBLIC_SITE_ORIGIN ?? "https://vurqel.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin),

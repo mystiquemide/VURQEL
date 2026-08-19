@@ -1,8 +1,8 @@
 # Vurqel
 
-Temporal supply-chain exposure proof (Track 2A). Vurqel proves which historical builds actually resolved a compromised package during its live window, down to the commit, the frozen-lockfile CI job, and the production-labelled service build, and returns a source-linked receipt backed by a graph path in HydraDB.
+Temporal supply-chain exposure proof (Track 2A). Vurqel is a CLI that proves which historical builds actually resolved a compromised package during its live window, down to the commit, the frozen-lockfile CI job, and the production-labelled service build, and returns a source-linked receipt backed by a graph path in HydraDB.
 
-**Live:** https://vurqel.splitpot.xyz · **Proof:** [`proof/`](proof/) — real HydraDB output (EXPOSED path + broken-SHA refusal).
+**Live explainer:** https://vurqel.vercel.app · **Proof:** [`proof/`](proof/) — real HydraDB output (EXPOSED path + broken-SHA refusal).
 
 The invariant: **`EXPOSED` requires a complete same-SHA path from incident to a production build; a complete no-match is `NOT_EXPOSED`; missing or contradictory evidence is `UNPROVEN`.** Never a guess.
 
@@ -50,7 +50,7 @@ Generic tooling answers dependency closure: "is this package present or flagged?
 
 Vurqel answers historical exposure: it verifies each hop on the same commit SHA and only concludes `EXPOSED` when the whole chain is present. A missing frozen install, a mismatched SHA, or unretrieved history yields `UNPROVEN`, not a false negative. This separation of absence (`NOT_EXPOSED`) from missing evidence (`UNPROVEN`) is the whole point.
 
-## How HydraDB is load-bearing
+## How HydraDB proves it
 
 The proof is a graph path, not an in-memory boolean. Vurqel writes typed nodes (`Incident`, `PackageVersion`, `LockfileSnapshot`, `GitCommit`, `WorkflowRun`, `CIJob`, `ServiceBuild`, `Service`) and typed edges, but only for hops the evaluator verified:
 
@@ -138,7 +138,7 @@ Assumptions: the `production` environment label comes from the explicit service 
 
 ## Attribution and license
 
-- HydraDB (`hydra-db/hydradb`, AGPL-3.0) - the graph database that performs the load-bearing write and snapshot-scoped path read.
+- HydraDB (`hydra-db/hydradb`, AGPL-3.0) - stores the typed provenance graph and answers the snapshot-consistent path query behind each receipt.
 - Incident sources - TanStack npm supply-chain postmortem and the StepSecurity advisory (linked above).
 - GitHub REST API and raw content - commit, lockfile, workflow, run, job, and check-run evidence.
 - Project license: **MIT** (see [`LICENSE`](LICENSE)). HydraDB is AGPL-3.0 and is used only as a separate networked service over its HTTP API, so its copyleft does not extend to Vurqel's own source.
