@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 /**
- * Vurqel CLI entry (CP-002.3): `vurqel investigate ...`.
+ * Vurqel CLI entry: `vurqel investigate ...` and `vurqel blast-radius`.
  *
  * Validates a bounded request (FR-001), resolves evidence as a labelled cached
- * replay (FR-012) — the built-in verified TanStack case, or a caller-supplied
- * `--evidence <file>` bundle — writes the typed graph to HydraDB, runs the
+ * replay (FR-012) or live GitHub, writes the typed graph to HydraDB, runs the
  * snapshot-scoped proof read, and prints the structured JSON receipt (FR-011).
  *
- * The equivalent local HTTP endpoint is a thin wrapper over `investigate()`
- * (src/investigate.ts); this command is the primary interaction surface.
+ * Output contract:
+ *   - STDOUT is the machine artefact only: the JSON receipt / blast-radius result.
+ *     Compact by default, pretty with --pretty. Never carries ANSI or decorations,
+ *     so `vurqel investigate | jq` and redirects are safe.
+ *   - STDERR carries the human UI (branding, progress, verdict), gated on TTY and
+ *     NO_COLOR / FORCE_COLOR / --no-color / --quiet / --json.
  *
  * Secret safety (NFR-005): the HydraDB token/auth header is never printed.
  */
@@ -25,51 +28,31 @@ import type { EvidenceBundle, InvestigationRequest } from "./domain/schema.js";
 import { tanstackEvidence, tanstackRequest } from "./fixtures/tanstack.js";
 import { computeBlastRadius } from "./blast-radius.js";
 import { ILLUSTRATIVE_REQUEST, ILLUSTRATIVE_BUNDLES } from "./fixtures/blast-radius.js";
+import * as ui from "./ui/index.js";
 
-const USAGE = `Usage: vurqel investigate [options]
-
-Runs one supply-chain exposure investigation and prints a JSON receipt.
-
-Options:
-  --repo <owner/name>     Repository (e.g. RelativeSure/websites)
-  --lockfile <path>       Lockfile path (default: tools/pnpm-lock.yaml)
-  --package <name>        Affected package (e.g. @tanstack/react-router)
-  --version <version>     Affected version (e.g. 1.169.8)
-  --from <iso-utc>        Incident interval start (inclusive), UTC
-  --to <iso-utc>          Incident interval end (exclusive), UTC
-  --service <name>        Service-name filter (e.g. websites-tools)
-  --job <name>            Named CI job whose conclusion decides (e.g. "Build (tools)")
-  --service-check <name>  Service-build check-run name (e.g. "Workers Builds: websites-tools")
-  --env <label>           Service environment label (default: production)
-  --incident-url <url>    Incident source URL
-  --live                  Fetch evidence live from public GitHub (cached under .vurqel-cache)
-  --evidence <file>       Labelled replay evidence bundle (JSON); for non-live custom cases
-  --pretty                Pretty-print the receipt JSON
-  -h, --help              Show this help
-
-With no request flags, the built-in verified TanStack case is used. Add --live to
-fetch that case's evidence from GitHub instead of the bundled replay.
-
-vurqel blast-radius [--pretty]
-  Runs an ILLUSTRATIVE multi-service blast-radius traversal (a synthetic scenario,
-  not the verified case) and prints the confirmed exposed set of services.`;
+const DOCS = "https://github.com/mystiquemide/vurqel";
 
 interface Args {
   flags: Map<string, string>;
   bools: Set<string>;
 }
 
+class UsageError extends Error {}
+
 function parseArgs(argv: string[]): Args {
   const flags = new Map<string, string>();
   const bools = new Set<string>();
-  const boolNames = new Set(["pretty", "help", "h", "live"]);
+  const boolNames = new Set([
+    "pretty", "help", "h", "live", "version", "V", "json", "quiet", "verbose", "no-color",
+  ]);
+  const alias: Record<string, string> = { h: "help", V: "version" };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i]!;
     if (token === "--") continue; // ignore the `pnpm run x -- args` separator
-    if (!token.startsWith("--") && token !== "-h") continue;
+    if (!token.startsWith("-")) continue; // subcommand / positional
     const name = token.replace(/^--?/, "");
     if (boolNames.has(name)) {
-      bools.add(name === "h" ? "help" : name);
+      bools.add(alias[name] ?? name);
       continue;
     }
     const value = argv[i + 1];
@@ -81,8 +64,6 @@ function parseArgs(argv: string[]): Args {
   }
   return { flags, bools };
 }
-
-class UsageError extends Error {}
 
 function requestFromFlags(flags: Map<string, string>): InvestigationRequest {
   const repo = flags.get("repo");
@@ -195,95 +176,233 @@ function resolve(args: Args): Resolved {
   );
 }
 
-async function main(): Promise<number> {
-  const argv = process.argv.slice(2);
-  const subcommand = argv[0];
-  const args = parseArgs(argv);
+function stdoutJson(value: unknown, pretty: boolean): void {
+  process.stdout.write(`${JSON.stringify(value, null, pretty ? 2 : 0)}\n`);
+}
 
-  if (args.bools.has("help") || subcommand === undefined) {
-    process.stdout.write(`${USAGE}\n`);
-    return subcommand === undefined ? 2 : 0;
-  }
-  if (subcommand === "blast-radius") {
-    const config = loadHydraDbConfig();
-    const client = new HydraDbClient(config);
-    if (!(await client.ready())) {
-      process.stderr.write(`HydraDB is not reachable at ${config.adminUrl}. Run \`pnpm hydradb:up\` first.\n`);
-      return 1;
-    }
-    const radius = await computeBlastRadius(client, ILLUSTRATIVE_REQUEST, ILLUSTRATIVE_BUNDLES);
-    process.stderr.write(
-      `[vurqel] blast-radius: ILLUSTRATIVE multi-service scenario (synthetic, not the verified TanStack case). ` +
-        `exposed=${radius.exposed.length}/${radius.candidates} db=${config.httpUrl}\n`,
-    );
-    process.stdout.write(`${JSON.stringify(radius, null, args.bools.has("pretty") ? 2 : 0)}\n`);
-    return 0;
-  }
-  if (subcommand !== "investigate") {
-    process.stderr.write(`Unknown command "${subcommand}".\n\n${USAGE}\n`);
-    return 2;
-  }
+function printHelp(): void {
+  ui.help(
+    [
+      { name: "investigate", summary: "Prove exposure for one incident (verified case by default)" },
+      { name: "blast-radius", summary: "Confirmed exposed services across a multi-service scenario" },
+    ],
+    [
+      { flag: "--live", summary: "Fetch evidence live from public GitHub" },
+      { flag: "--pretty", summary: "Pretty-print the JSON receipt" },
+      { flag: "--json", summary: "Machine JSON only, no decorations" },
+      { flag: "--quiet", summary: "Suppress progress output" },
+      { flag: "--no-color", summary: "Disable ANSI colour" },
+      { flag: "--verbose", summary: "Show stack traces on error" },
+      { flag: "-h, --help", summary: "Show this help" },
+      { flag: "-V, --version", summary: "Show version" },
+      { flag: "--repo <owner/name>", summary: "Target repository (with --live)" },
+      { flag: "--package <name>", summary: "Affected package" },
+      { flag: "--version <v>", summary: "Affected version" },
+      { flag: "--from / --to <iso>", summary: "Incident window (UTC, half-open)" },
+      { flag: "--job <name>", summary: "Named CI job whose conclusion decides" },
+      { flag: "--service-check <name>", summary: "Production service-build check-run" },
+    ],
+    [
+      "pnpm run investigate -- --pretty",
+      "pnpm run investigate -- --live",
+      "pnpm run blast-radius -- --pretty",
+    ],
+  );
+}
 
+async function investigateFlow(args: Args, verbose: boolean): Promise<number> {
   const resolved = resolve(args);
   const config = loadHydraDbConfig();
   const client = new HydraDbClient(config);
+  const pretty = args.bools.has("pretty");
+  const jsonMode = args.bools.has("json");
 
+  ui.blank();
+  ui.logo("temporal supply-chain exposure proof");
+  ui.blank();
+  ui.kv([
+    ["Package", `${resolved.request.packageName}@${resolved.request.version}`],
+    ["Window", `${resolved.request.interval.from} .. ${resolved.request.interval.to}`],
+    ["Repository", `${resolved.request.repository.owner}/${resolved.request.repository.name}`],
+    ["Source", resolved.live ? "live GitHub" : "cached replay"],
+  ]);
+  ui.blank();
+
+  const readySpin = ui.spinner("Connecting to HydraDB");
   if (!(await client.ready())) {
-    process.stderr.write(
-      `HydraDB is not reachable at ${config.adminUrl}. Run \`pnpm hydradb:up\` first.\n`,
-    );
+    readySpin.fail("HydraDB unreachable");
+    ui.errorBlock({
+      title: "HydraDB is not running",
+      cause: `The graph database could not be reached at ${config.adminUrl}.`,
+      fix: "pnpm run hydradb:up",
+      docs: `${DOCS}#install-and-run`,
+    });
     return 1;
   }
+  readySpin.succeed("HydraDB ready", config.httpUrl);
 
   let evidence: EvidenceBundle;
   let mode: "online" | "cached-replay";
   if (resolved.live) {
-    const collected = await collectEvidence(new GitHubClient(loadGitHubConfig()), resolved.request);
-    evidence = collected.evidence;
-    mode = collected.mode;
+    const collectSpin = ui.spinner("Collecting evidence from public GitHub");
+    try {
+      const collected = await collectEvidence(new GitHubClient(loadGitHubConfig()), resolved.request);
+      evidence = collected.evidence;
+      mode = collected.mode;
+    } catch (err) {
+      collectSpin.fail("Evidence collection failed");
+      throw err;
+    }
+    collectSpin.succeed("Evidence collected", mode);
   } else {
     evidence = resolved.evidence;
     mode = "cached-replay";
   }
 
+  const proveSpin = ui.spinner("Proving on the graph");
   const startedAt = Date.now();
-  const result = await investigate(client, resolved.request, evidence, { mode });
+  let result: Awaited<ReturnType<typeof investigate>>;
+  try {
+    result = await investigate(client, resolved.request, evidence, { mode });
+  } catch (err) {
+    proveSpin.fail("Graph proof failed");
+    throw err;
+  }
   const durationMs = Date.now() - startedAt;
-
-  // Observability (NFR-008): request id, state, reason, mode, timing — no secrets.
-  process.stderr.write(
-    `[vurqel] request=${result.receipt.requestId} state=${result.receipt.state} ` +
-      `reason=${result.receipt.reasonCode} mode=${mode} pathNodes=${result.path?.nodes.length ?? 0} ` +
-      `durationMs=${durationMs} db=${config.httpUrl}\n`,
+  const nodes = result.path?.nodes.length ?? 0;
+  proveSpin.succeed(
+    nodes > 0 ? `Path read (${nodes}/${result.graph.nodes.length} nodes)` : "Path read (no complete path)",
+    result.receipt.snapshot?.bookmark,
   );
 
-  const pretty = args.bools.has("pretty");
-  process.stdout.write(`${JSON.stringify(result.receipt, null, pretty ? 2 : 0)}\n`);
+  const r = result.receipt;
+  ui.verdict(r.state, r.reason);
+  const facts: Array<[string, string]> = [];
+  if (r.commitSha) facts.push(["Commit", r.commitSha.slice(0, 12)]);
+  if (r.ciJob) facts.push(["CI job", `${r.ciJob.name} = ${r.ciJob.conclusion}`]);
+  if (r.serviceBuild) facts.push(["Service", `${r.serviceBuild.service} · ${r.serviceBuild.environmentLabel}`]);
+  facts.push(["Sources", `${r.sources.length} public links`]);
+  facts.push(["Elapsed", `${durationMs} ms`]);
+  ui.blank();
+  ui.kv(facts, "     ");
+  if (r.claimBoundary) {
+    ui.blank();
+    ui.step(r.claimBoundary);
+  }
+  if (!jsonMode) {
+    ui.info("Full receipt (JSON) on stdout", "pipe to jq, or add --pretty");
+  }
+  ui.blank();
+
+  stdoutJson(r, pretty);
   return 0;
 }
 
-main()
-  .then((code) => {
-    process.exitCode = code;
-  })
-  .catch((err: unknown) => {
-    if (err instanceof UsageError) {
-      process.stderr.write(`${err.message}\n\n${USAGE}\n`);
-      process.exitCode = 2;
-      return;
-    }
-    if (err instanceof SourceError) {
-      const tag = err.retryable ? "Retryable source error" : "Source error";
-      process.stderr.write(`${tag} [${err.code}]: ${err.message}\n`);
-      process.exitCode = 1;
-      return;
-    }
-    if (err instanceof HydraDbError) {
-      process.stderr.write(`HydraDB error [${err.code}]: ${err.message}\n`);
-      process.exitCode = 1;
-      return;
-    }
-    const message = err instanceof Error ? err.message : String(err);
-    process.stderr.write(`Investigation failed: ${message}\n`);
-    process.exitCode = 1;
-  });
+async function blastRadiusFlow(args: Args): Promise<number> {
+  const config = loadHydraDbConfig();
+  const client = new HydraDbClient(config);
+  const pretty = args.bools.has("pretty");
+
+  ui.blank();
+  ui.logo("blast radius");
+  ui.blank();
+  ui.warn("Illustrative synthetic scenario", "not the verified TanStack case");
+  ui.blank();
+
+  const readySpin = ui.spinner("Connecting to HydraDB");
+  if (!(await client.ready())) {
+    readySpin.fail("HydraDB unreachable");
+    ui.errorBlock({
+      title: "HydraDB is not running",
+      cause: `The graph database could not be reached at ${config.adminUrl}.`,
+      fix: "pnpm run hydradb:up",
+      docs: `${DOCS}#install-and-run`,
+    });
+    return 1;
+  }
+  readySpin.succeed("HydraDB ready", config.httpUrl);
+
+  const spin = ui.spinner(`Evaluating ${ILLUSTRATIVE_BUNDLES.length} candidate services`);
+  const radius = await computeBlastRadius(client, ILLUSTRATIVE_REQUEST, ILLUSTRATIVE_BUNDLES);
+  spin.succeed(`Evaluated ${radius.candidates} candidate services`);
+
+  ui.section("Blast radius");
+  const rows: string[][] = [
+    ...radius.exposed.map((o) => [o.service, o.state, o.reasonCode]),
+    ...radius.notExposed.map((o) => [o.service, o.state, o.reasonCode]),
+    ...radius.unproven.map((o) => [o.service, o.state, o.reasonCode]),
+  ];
+  ui.table(["SERVICE", "VERDICT", "REASON"], rows);
+  ui.blank();
+  ui.info(`Confirmed exposed: ${radius.exposed.length} of ${radius.candidates}`);
+  ui.blank();
+
+  stdoutJson(radius, pretty);
+  return 0;
+}
+
+function reportError(err: unknown, verbose: boolean): number {
+  ui.restoreCursor();
+  if (err instanceof UsageError) {
+    ui.errorBlock({ title: err.message, fix: "vurqel --help", docs: DOCS });
+    return 2;
+  }
+  if (err instanceof SourceError) {
+    const parts: ui.ErrorParts = {
+      title: err.retryable ? "GitHub source error (retryable)" : "GitHub source error",
+      cause: `[${err.code}] ${err.message}`,
+      docs: DOCS,
+    };
+    if (err.code === "rate_limited") parts.fix = "Set GITHUB_TOKEN to raise the anonymous 60/hour limit.";
+    ui.errorBlock(parts);
+    if (verbose && err.stack) process.stderr.write(`\n${err.stack}\n`);
+    return 1;
+  }
+  if (err instanceof HydraDbError) {
+    ui.errorBlock({
+      title: "HydraDB error",
+      cause: `[${err.code}] ${err.message}`,
+      fix: "pnpm run hydradb:up",
+      docs: DOCS,
+    });
+    if (verbose && err.stack) process.stderr.write(`\n${err.stack}\n`);
+    return 1;
+  }
+  const message = err instanceof Error ? err.message : String(err);
+  ui.errorBlock({ title: "Investigation failed", cause: message, docs: DOCS });
+  if (verbose && err instanceof Error && err.stack) process.stderr.write(`\n${err.stack}\n`);
+  return 1;
+}
+
+async function main(): Promise<number> {
+  const argv = process.argv.slice(2);
+  const subcommand = argv[0] !== undefined && !argv[0].startsWith("-") ? argv[0] : undefined;
+  let verbose = false;
+  try {
+    const args = parseArgs(argv);
+    ui.setNoColor(args.bools.has("no-color"));
+    ui.setQuiet(args.bools.has("quiet") || args.bools.has("json"));
+    ui.setSilent(args.bools.has("json"));
+    verbose = args.bools.has("verbose");
+
+    if (args.bools.has("version")) { ui.version(); return 0; }
+    if (args.bools.has("help")) { printHelp(); return 0; }
+    if (subcommand === undefined) { ui.welcome(); return 0; }
+    if (subcommand === "blast-radius") return await blastRadiusFlow(args);
+    if (subcommand === "investigate") return await investigateFlow(args, verbose);
+
+    ui.errorBlock({ title: `Unknown command: "${subcommand}"`, fix: "vurqel --help", docs: DOCS });
+    return 2;
+  } catch (err) {
+    return reportError(err, verbose);
+  }
+}
+
+process.on("SIGINT", () => {
+  ui.restoreCursor();
+  process.exit(130);
+});
+
+main().then((code) => {
+  process.exitCode = code;
+});
