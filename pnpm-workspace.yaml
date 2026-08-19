@@ -1,5 +1,6 @@
-# pnpm build-script approvals (pnpm 11 security default).
-# esbuild (pulled in transitively by tsx) ships prebuilt platform binaries via
-# optional dependencies, so its postinstall build step is not required.
+# pnpm 11 build-script approval. esbuild (pulled in transitively by tsx) ships
+# prebuilt platform binaries via optional dependencies, so its postinstall build
+# step is not required for the CLI. Allow it explicitly so a clean `pnpm install`
+# does not fail on the ignored-build-scripts gate.
 allowBuilds:
-  esbuild: false
+  esbuild: true
