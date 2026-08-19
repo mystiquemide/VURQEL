@@ -69,7 +69,7 @@ export function Proof() {
 {JSON.stringify(receipt, null, 2)}
           </pre>
           <a
-            href="https://raw.githubusercontent.com/mystiquemide/VURQEL/main/examples/receipts/tanstack-exposed.json"
+            href="https://raw.githubusercontent.com/mystiquemide/vurqel/main/examples/receipts/tanstack-exposed.json"
             target="_blank"
             rel="noopener noreferrer"
             className="label mt-4 inline-block"

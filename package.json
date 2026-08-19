@@ -15,11 +15,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/mystiquemide/VURQEL.git"
+    "url": "https://github.com/mystiquemide/vurqel.git"
   },
-  "homepage": "https://github.com/mystiquemide/VURQEL#readme",
+  "homepage": "https://github.com/mystiquemide/vurqel#readme",
   "bugs": {
-    "url": "https://github.com/mystiquemide/VURQEL/issues"
+    "url": "https://github.com/mystiquemide/vurqel/issues"
   },
   "author": "MystiqueMide",
   "license": "MIT",

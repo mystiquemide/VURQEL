@@ -73,7 +73,7 @@ export function HydraDB() {
           <p className="mt-4 font-mono text-xs text-graytone">
             Real HydraDB output, reproducible in the repo under{" "}
             <a
-              href="https://github.com/mystiquemide/VURQEL/tree/main/proof"
+              href="https://github.com/mystiquemide/vurqel/tree/main/proof"
               target="_blank"
               rel="noopener noreferrer"
               className="underline decoration-[color:var(--hairline)] underline-offset-4 hover:decoration-ink"

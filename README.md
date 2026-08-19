@@ -100,7 +100,7 @@ flowchart LR
 Requirements: Node >= 22, pnpm, Docker. HydraDB is pinned by digest (`ghcr.io/hydra-db/hydradb@sha256:db78309a...cdb709`, server 0.1.0).
 
 ```bash
-git clone https://github.com/mystiquemide/VURQEL.git && cd VURQEL
+git clone https://github.com/mystiquemide/vurqel.git && cd vurqel
 pnpm install
 pnpm run hydradb:up      # clean-starts the pinned node (env: see .env.example)
 pnpm run investigate -- --live --pretty   # seed + query in one command

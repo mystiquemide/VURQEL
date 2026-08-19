@@ -89,7 +89,7 @@ export function Nav() {
           <span className="label label-faint hidden truncate px-4 md:block">{current}</span>
           <div className="flex items-center gap-5">
             <a
-              href="https://github.com/mystiquemide/VURQEL"
+              href="https://github.com/mystiquemide/vurqel"
               className="label hidden sm:inline"
               target="_blank"
               rel="noopener noreferrer"

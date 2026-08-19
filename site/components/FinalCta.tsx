@@ -56,7 +56,7 @@ export function FinalCta() {
           <div className="mt-10 flex flex-wrap gap-x-10 gap-y-4 overflow-hidden">
             <a
               data-cta-link
-              href="https://github.com/mystiquemide/VURQEL/blob/main/examples/receipts/tanstack-exposed.json"
+              href="https://github.com/mystiquemide/vurqel/blob/main/examples/receipts/tanstack-exposed.json"
               target="_blank"
               rel="noopener noreferrer"
               className="label border-b border-ink/40 pb-1 hover:border-ink"
@@ -67,7 +67,7 @@ export function FinalCta() {
             </a>
             <a
               data-cta-link
-              href="https://github.com/mystiquemide/VURQEL"
+              href="https://github.com/mystiquemide/vurqel"
               target="_blank"
               rel="noopener noreferrer"
               className="label border-b border-ink/40 pb-1 hover:border-ink"
